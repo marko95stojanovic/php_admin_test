@@ -1,0 +1,144 @@
+<?php
+
+require_once __DIR__ . '/init/db.php';
+
+// if pour la story 4
+if (isset($_GET['username'])) {
+    $search_username = $_GET['username'];
+}
+?>
+// Story 0: request to find all username
+/*
+$stmt = ... 
+$stmt->execute();
+$users = $stmt->fetchAll();
+*/
+
+
+CREATE TABLE user(
+    id INT not null PRIMARY KEY,
+    name VARCHAR(255) UNIQUE,
+    password VARCHAR(255),
+    date_time_inscription DATETIME,
+    date_time_last_connexion DATETIME
+);
+
+
+<?php
+$dsn = 'mysql:host=localhost;dbname=user;charset=utf8';
+$userofdb = 'root';
+$passwordofdb = "";
+try {
+  $dbh = new PDO($dsn, $userofdb, $passwordofdb);
+} catch (PDOException $e) {
+  point_r(
+    array(
+      "ERROR" => $e->getMessage()
+    )
+    );
+    die();
+}
+    $dbh = new PDO($dsn, $userofdb, $passwordofdb);
+    ?>
+
+
+<?php
+
+require "includes/database.php";
+
+
+if (isset($_POST["email"]) && isset($_POST["name"]) && isset($_POST["password"])) {
+    $email = htmlspecialchars($_POST["email"]);
+    $password = $_POST["password"];
+    $name = htmlspecialchars($_POST["name"]);
+    if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        if (strlen($name) >= 4) {
+            if(isset ($_POST["password"])){
+                $pattern = '/^(?=.*[!@#$%^&*-])(?=.*[0-9])(?=.*[A-Z]).{8,20}$/ ';
+                if (preg_match($pattern, $password)) {
+                $user = $dbh->prepare('SELECT * FROM user WHERE email = :email');
+                $user->execute(['email' => $email]);
+                $useer = $user->fetch();
+                if (empty($user)){
+                    $options = [
+                        'cost' => 12,
+                    ];
+                    $passwordhash = password_hash($password, PASSWORD_BCRYPT, $options);
+                    $insert = $dbh->prepare('INSERT INTO user (email, name, password) VALUES (:email, :name, :password)');
+                 
+                 
+                    $redirect = $insert->execute(array(
+
+                    'email' => $email,
+             
+                    'name' => $name,
+             
+                    'password' => $password
+             
+             
+                    ));
+                  if($redirect){
+                        header("Location: login.php");
+                    }
+
+                    
+                }else{
+                    echo "Votre compte existe.";
+                }
+    
+}
+
+?>
+
+
+<?php
+
+
+  if(isset($_POST['newname'])){
+    $email = stripslashes($_POST['email']); 
+    $password = stripslashes($_REQUEST['password']);
+    $newname = stripslashes($_POST['newname']); 
+    $query = $dbh->prepare('SELECT * FROM user WHERE email = :email and password = :password');
+    $query->execute(['email' => $email, 'password' => $password]);
+    $query = $query->fetch();
+    $newquery=$dbh->prepare('UPDATE user SET name=:newname WHERE id=:id');
+    $newquery->execute(['newname' => $newname, 'id' => $query[0]]);
+  }
+
+?>
+
+
+<?php
+
+
+if(isset($_POST['Email'])){
+  $email = stripslashes($_POST['email']); 
+  $password = stripslashes($_REQUEST['password']);
+  $query = $dbh->prepare('delete from user WHERE email = :email and password = :password');
+  $query->execute(['email' => $email, 'password' => $password]);
+  $query = $query->fetch();
+}
+
+?>
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div>
+        <button class="button_valider" type="submit">
+            update</button>
+
+    <div>
+        <button class="button_valider" type="submit">
+            delete</button>
+        </div>
+    </div>
+</body>
+</html>
